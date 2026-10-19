@@ -236,7 +236,7 @@ export default function App() {
         open={newOpen}
         currentLabel={formatStamp(w.tick)}
         currentSeed={w.seedText}
-        hasSave={game.hasSave()}
+        hasSave={newOpen && game.hasSave()}
         onCancel={() => setNewOpen(false)}
         onConfirm={(seed) => {
           setNewOpen(false);
