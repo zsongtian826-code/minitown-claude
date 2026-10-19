@@ -186,6 +186,20 @@ describe('ユーザー介入イベント', () => {
     expect(gathered.size).toBe(joined.length);
   });
 
+  it('同じ施設を複数人が使うとき、席は重ならない(カフェに集まった人は別々の席にいる)', () => {
+    for (const seed of [7, 8, 9, 10, 11]) {
+      const sim = newSim(seed);
+      runTo(sim, 1, 19, 0);
+      sim.trigger('invite');
+      for (let i = 0; i < 80; i++) {
+        sim.step();
+        const seated = CHAR_IDS.filter((id) => sim.world.chars[id].activity === 'gathering');
+        const spots = seated.map((id) => `${sim.world.chars[id].pos.x},${sim.world.chars[id].pos.y}`);
+        expect(new Set(spots).size).toBe(spots.length);
+      }
+    }
+  });
+
   it('お誘い: 仕事中のアオイは見送り、睡眠中は参加できない', () => {
     const sim = newSim(7);
     runTo(sim, 1, 10, 30);

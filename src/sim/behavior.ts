@@ -416,6 +416,17 @@ export function bestOption(
 
 /** UI用: いまの計画の次にやりそうなこと(予測) */
 export function predictNext(world: World, c: CharState): Option | null {
+  if (c.plan?.kind === 'sleep' && c.plan.stage === 'doing') {
+    // 眠っている人の次は、起きて朝の準備
+    return {
+      key: optionKey('morning', homeId(c)),
+      kind: 'morning',
+      placeId: homeId(c),
+      score: 1.5,
+      reason: '起きたら朝の身支度',
+      duration: [30, 40],
+    };
+  }
   const options = buildOptions(world, c);
   const cur = c.plan ? planKey(c.plan) : '';
   const others = options.filter((o) => o.key !== cur);

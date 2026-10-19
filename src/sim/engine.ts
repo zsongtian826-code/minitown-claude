@@ -215,6 +215,7 @@ function arrive(world: World, c: CharState, rng: Rng): void {
   switch (plan.kind) {
     case 'sleep':
       c.mem.sleepStart = world.tick;
+      plan.reason = 'ぐっすり眠っている。朝になったら起きる';
       pushLog(world, 'sleep', `${prof.name}は${placeName}で就寝した`, c.id);
       break;
     case 'work':

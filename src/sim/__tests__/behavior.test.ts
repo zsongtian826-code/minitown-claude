@@ -218,6 +218,63 @@ describe('自律行動: 状態に応じた判断', () => {
   });
 });
 
+describe('移動・天候による行動の変化', () => {
+  it('歩いている間は毎tick必ず1マス進み、通路で詰まったり立ち往生したりしない', () => {
+    for (const seed of [1, 2, 3, 42, 12345]) {
+      const sim = newSim(seed);
+      let walkingTicks = 0;
+      for (let i = 0; i < 72 * 60; i++) {
+        const before = CHAR_IDS.map((id) => ({ ...sim.world.chars[id].pos }));
+        const planStart = CHAR_IDS.map((id) => {
+          const c = sim.world.chars[id];
+          return c.plan?.stage === 'travel' && c.path.length > 0 && !c.chat ? c.plan.startedAt : -1;
+        });
+        sim.step();
+        CHAR_IDS.forEach((id, k) => {
+          const c = sim.world.chars[id];
+          // 前のtickで移動中だった人は、同じ計画を続けている限り1マス進んでいる
+          if (planStart[k] >= 0 && c.activity === 'walking' && c.plan?.startedAt === planStart[k]) {
+            walkingTicks++;
+            expect(c.pos.x !== before[k].x || c.pos.y !== before[k].y, `${id} が立ち往生 tick ${sim.world.tick}`).toBe(true);
+          }
+        });
+      }
+      expect(walkingTicks).toBeGreaterThan(300);
+    }
+  });
+
+  it('雨の日は、晴れ・曇りの日より公園や広場で過ごす時間が少ない', () => {
+    let rainyOutdoor = 0;
+    let rainyTicks = 0;
+    let fineOutdoor = 0;
+    let fineTicks = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+      const sim = newSim(seed);
+      for (let i = 0; i < 72 * 60; i++) {
+        // 午後から夜(自由時間)の時間帯だけを比べる
+        sim.step();
+        const m = (sim.world.tick + 420) % 1440;
+        if (m < 17 * 60 + 30 || m > 21 * 60) continue;
+        const rainy = sim.world.weather.current === 'rainy';
+        for (const id of CHAR_IDS) {
+          const c = sim.world.chars[id];
+          const out = c.activity !== 'walking' && (placeAt(c.pos)?.kind === 'park' || placeAt(c.pos)?.kind === 'plaza');
+          if (rainy) {
+            rainyTicks++;
+            if (out) rainyOutdoor++;
+          } else {
+            fineTicks++;
+            if (out) fineOutdoor++;
+          }
+        }
+      }
+    }
+    expect(rainyTicks).toBeGreaterThan(300);
+    expect(fineTicks).toBeGreaterThan(300);
+    expect(rainyOutdoor / rainyTicks).toBeLessThan((fineOutdoor / fineTicks) * 0.6);
+  });
+});
+
 describe('長時間の安定性', () => {
   it('テスト20: ゲーム内24時間を進めても破綻しない', () => {
     const sim = newSim(12345);

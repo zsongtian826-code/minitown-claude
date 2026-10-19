@@ -36,7 +36,7 @@ export const ACTIVITY_LABEL: Record<Activity, string> = {
 
 export const ACTIVITY_ICON: Record<Activity, string> = {
   sleeping: '💤',
-  morning: '🪥',
+  morning: '☀️',
   walking: '🚶',
   working: '💼',
   eating: '🍙',
